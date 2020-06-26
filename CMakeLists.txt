@@ -39,8 +39,11 @@ target_link_libraries (${PROJECT_NAME} i2c)
 
 link_directories (${EXTERNAL_INSTALL_LOCATION}/lib)
 
-set (SERVICE_FILES ${PROJECT_SOURCE_DIR}/ipmb.service)
-set (CONFIG_FILES ${PROJECT_SOURCE_DIR}/ipmb-channels.json)
+set (SERVICE_FILES ${PROJECT_SOURCE_DIR}/ipmb@.service)
+set (CONFIG_FILES ${PROJECT_SOURCE_DIR}/ipmb-channels0.json)
+set (CONFIG_FILES ${PROJECT_SOURCE_DIR}/ipmb-channels1.json)
+set (CONFIG_FILES ${PROJECT_SOURCE_DIR}/ipmb-channels2.json)
+set (CONFIG_FILES ${PROJECT_SOURCE_DIR}/ipmb-channels3.json)
 
 install (TARGETS ${PROJECT_NAME} DESTINATION bin)
 install (FILES ${SERVICE_FILES} DESTINATION /lib/systemd/system/)

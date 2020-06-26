@@ -26,10 +26,15 @@
 #include <tuple>
 #include <unordered_map>
 
+#include <iostream>
 /**
  * @brief Dbus
  */
-static constexpr const char *ipmbBus = "xyz.openbmc_project.Ipmi.Channel.Ipmb";
+
+static std::string ipmbBus = "xyz.openbmc_project.Ipmi.Channel.Ipmb";
+ 
+//static constexpr const char *ipmbBus = "xyz.openbmc_project.Ipmi.Channel.Ipmb";
+
 static constexpr const char *ipmbObj = "/xyz/openbmc_project/Ipmi/Channel/Ipmb";
 static constexpr const char *ipmbDbusIntf = "org.openbmc.Ipmb";
 
@@ -40,6 +45,7 @@ static std::list<IpmbChannel> ipmbChannels;
 static const std::unordered_map<std::string, ipmbChannelType>
     ipmbChannelTypeMap = {{"me", ipmbChannelType::me},
                           {"ipmb", ipmbChannelType::ipmb}};
+std::string node;
 
 /**
  * @brief Ipmb request class methods
@@ -428,6 +434,23 @@ void IpmbChannel::processI2cEvent()
         auto ipmbMessageReceived = IpmbRequest();
         ipmbMessageReceived.i2cToIpmbConstruct(ipmbFrame, r);
 
+        phosphor::logging::log<phosphor::logging::level::ERR>(
+               "processI2cEvent: ipmbmessag Received \n");
+	printf(" Ipmb Req address : %x\n", ipmbMessageReceived.address);	
+	printf(" Ipmb Req netFn : %x\n", ipmbMessageReceived.netFn);	
+	printf(" Ipmb Req RsLun : %x\n", ipmbMessageReceived.rsLun);	
+	printf(" Ipmb Req RqSA: %x\n", ipmbMessageReceived.rqSA);	
+	printf(" Ipmb Req seq : %x\n", ipmbMessageReceived.seq);	
+	printf(" Ipmb Req RqLun: %x\n", ipmbMessageReceived.rqLun);	
+	printf(" Ipmb Req cmd : %x\n", ipmbMessageReceived.cmd);
+	
+	printf(" Ipmb Data :");
+	for(int i=0; i<ipmbMessageReceived.data.size(); i++)
+	{
+		printf("%x:", ipmbMessageReceived.data.at(i));		
+	}	
+	std::cout.flush();
+	
         std::map<std::string, std::variant<int>> options{
             {"rqSA", ipmbAddressTo7BitSet(ipmbMessageReceived.rqSA)}};
         using IpmiDbusRspType = std::tuple<uint8_t, uint8_t, uint8_t, uint8_t,
@@ -781,9 +804,10 @@ static int initializeChannels()
     std::shared_ptr<IpmbCommandFilter> commandFilter =
         std::make_shared<IpmbCommandFilter>();
 
-    constexpr const char *configFilePath =
-        "/usr/share/ipmbbridge/ipmb-channels.json";
-    std::ifstream configFile(configFilePath);
+    std::string configFilePath =
+        "/usr/share/ipmbbridge/ipmb-channels" + node + ".json";
+
+    std::ifstream configFile(configFilePath.c_str());
     if (!configFile.is_open())
     {
         phosphor::logging::log<phosphor::logging::level::ERR>(
@@ -963,7 +987,13 @@ void addSendBroadcastHandler()
  */
 int main(int argc, char *argv[])
 {
-    conn->request_name(ipmbBus);
+    if (argc > 1)
+    {
+        node = argv[1];
+	ipmbBus = ipmbBus + node;
+    }
+
+    conn->request_name(ipmbBus.c_str());
 
     auto server = sdbusplus::asio::object_server(conn);
 
