@@ -430,7 +430,6 @@ void IpmbChannel::processI2cEvent()
 
         std::map<std::string, std::variant<int>> options{
             {"rqSA", ipmbAddressTo7BitSet(ipmbMessageReceived.rqSA)}};
-
         using IpmiDbusRspType = std::tuple<uint8_t, uint8_t, uint8_t, uint8_t,
                                            std::vector<uint8_t>>;
         conn->async_method_call(
