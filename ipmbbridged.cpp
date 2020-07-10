@@ -26,7 +26,6 @@
 #include <tuple>
 #include <unordered_map>
 
-#include <iostream>
 /**
  * @brief Dbus
  */
@@ -41,7 +40,6 @@ static std::list<IpmbChannel> ipmbChannels;
 static const std::unordered_map<std::string, ipmbChannelType>
     ipmbChannelTypeMap = {{"me", ipmbChannelType::me},
                           {"ipmb", ipmbChannelType::ipmb}};
-
 
 /**
  * @brief Ipmb request class methods
@@ -430,10 +428,8 @@ void IpmbChannel::processI2cEvent()
         auto ipmbMessageReceived = IpmbRequest();
         ipmbMessageReceived.i2cToIpmbConstruct(ipmbFrame, r);
 
-
         std::map<std::string, std::variant<int>> options{
-            {"rqSA", ipmbAddressTo7BitSet(ipmbMessageReceived.rqSA)}
-        };
+            {"rqSA", ipmbAddressTo7BitSet(ipmbMessageReceived.rqSA)}};
 
         using IpmiDbusRspType = std::tuple<uint8_t, uint8_t, uint8_t, uint8_t,
                                            std::vector<uint8_t>>;
@@ -542,8 +538,7 @@ int IpmbChannel::ipmbChannelInit(const char *ipmbI2cSlave)
     std::string busStr = ipmbI2cSlaveStr.substr(findHyphen + 1);
     try
     {
-        ipmbBusId = std::stoi(busStr);
-       
+        ipmbBusId = std::stoi(busStr); 
     }
     catch (std::invalid_argument)
     {
@@ -813,25 +808,18 @@ static int initializeChannels()
             const std::string &slavePath = channelConfig["slave-path"];
             uint8_t bmcAddr = channelConfig["bmc-addr"];
             uint8_t reqAddr = channelConfig["remote-addr"];
-
             ipmbChannelType type = ipmbChannelTypeMap.at(typeConfig);
 
             auto channel = ipmbChannels.emplace(ipmbChannels.end(), io, bmcAddr,
-                                                reqAddr, channelIdx, type, commandFilter);
-            
-            printf(" Type -: %d\n", channel->getChannelType());
-            printf(" Channel Idx -: %d\n", channel->getChannelIdx());
-	    std::cout.flush();
-
+                                                reqAddr, channelIdx, type, 
+                                                commandFilter); 
             if (channel->ipmbChannelInit(slavePath.c_str()) < 0)
             {
                 phosphor::logging::log<phosphor::logging::level::ERR>(
                     "initializeChannels: channel initialization failed");
                 return -1;
             }
-
 	    channelIdx++;
-
         }
     }
     catch (nlohmann::json::exception &e)
@@ -846,7 +834,7 @@ static int initializeChannels()
             "initializeChannels: Error invalid type");
         return -1;
     }
-   return 0;
+    return 0;
 }
 
 auto ipmbHandleRequest = [](boost::asio::yield_context yield,
@@ -978,8 +966,6 @@ void addSendBroadcastHandler()
         static_cast<sdbusplus::bus::bus &>(*conn),
         "type='signal',member='sendBroadcast',", sendBroadcastHandler);
 }
-
-
 
 /**
  * @brief Main

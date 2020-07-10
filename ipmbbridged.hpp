@@ -301,11 +301,10 @@ class IpmbChannel
 
     uint8_t ipmbBmcSlaveAddress;
     uint8_t ipmbRqSlaveAddress;
-    uint8_t ipmbBusId;
-    
+    uint8_t ipmbBusId;    
     int channelIdx;
 
-    ipmbChannelType type;    
+    ipmbChannelType type;
 
     std::shared_ptr<IpmbCommandFilter> commandFilter;
 
