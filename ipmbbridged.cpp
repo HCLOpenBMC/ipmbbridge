@@ -26,7 +26,6 @@
 #include <tuple>
 #include <unordered_map>
 
-#include <iostream>
 /**
  * @brief Dbus
  */
@@ -430,8 +429,6 @@ void IpmbChannel::processI2cEvent()
         ipmbMessageReceived.i2cToIpmbConstruct(ipmbFrame, r);
 
         uint8_t hostId = getHostId();
-        printf("[Bus Id] :%d\n", hostId);
-        std::cout.flush();
 
         std::map<std::string, std::variant<int>> options{
             {"rqSA", ipmbAddressTo7BitSet(ipmbMessageReceived.rqSA)},
@@ -816,14 +813,11 @@ static int initializeChannels()
             uint8_t bmcAddr = channelConfig["bmc-addr"];
             uint8_t reqAddr = channelConfig["remote-addr"];
 
-            if (data.contains("host"))
+            if (channelConfig.contains("host"))
             {
                  hostId = channelConfig["host"];
             }
             ipmbChannelType type = ipmbChannelTypeMap.at(typeConfig);
-
-            printf("Host Id ::: %d\n", hostId);
-            std::cout.flush();           
 
             auto channel = ipmbChannels.emplace(ipmbChannels.end(), io, bmcAddr,
                                                 reqAddr, hostId, type, commandFilter);
