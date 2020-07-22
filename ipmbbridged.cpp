@@ -806,7 +806,22 @@ static int initializeChannels()
             const std::string &slavePath = channelConfig["slave-path"];
             uint8_t bmcAddr = channelConfig["bmc-addr"];
             uint8_t reqAddr = channelConfig["remote-addr"];
+
             ipmbChannelType type = ipmbChannelTypeMap.at(typeConfig);
+
+            if ((!channelConfig.contains("channelId")) &&  (type == ipmbChannelType::me))
+            {
+                 channelIdx = 1;
+            } 
+            if ((!channelConfig.contains("channelId")) &&  (type == ipmbChannelType::ipmb))
+            {
+                 channelIdx = 0;
+            }
+            if (channelConfig.contains("channelId"))
+            {
+                 channelIdx = channelConfig["channelId"];
+            }
+
             auto channel =
                 ipmbChannels.emplace(ipmbChannels.end(), io, bmcAddr, reqAddr,
                                      channelIdx, type, commandFilter);
@@ -816,7 +831,6 @@ static int initializeChannels()
                     "initializeChannels: channel initialization failed");
                 return -1;
             }
-            channelIdx++;
         }
     }
     catch (nlohmann::json::exception &e)
