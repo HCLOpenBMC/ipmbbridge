@@ -767,12 +767,16 @@ std::tuple<int, uint8_t, uint8_t, uint8_t, uint8_t, std::vector<uint8_t>>
     return returnStatus(ipmbResponseStatus::timeout);
 }
 
-static IpmbChannel *getChannel(uint8_t channelIdx)
+static IpmbChannel *getChannel(uint8_t reqChannel)
 {
+    uint8_t channelIdx = (reqChannel >> 2);
+    uint8_t channelType = (reqChannel & 3);
+
     auto channel =
         std::find_if(ipmbChannels.begin(), ipmbChannels.end(),
-                     [channelIdx](IpmbChannel &channel) {
-                         return channel.getChannelIdx() == channelIdx;
+                     [channelIdx, channelType](IpmbChannel &channel) {
+                         return ((channel.getChannelIdx() == channelIdx) &&
+                                 (channel.getChannelType() == static_cast<ipmbChannelType>(channelType)));
                      });
     if (channel != ipmbChannels.end())
     {
@@ -809,17 +813,9 @@ static int initializeChannels()
 
             ipmbChannelType type = ipmbChannelTypeMap.at(typeConfig);
 
-            if ((!channelConfig.contains("channelId")) &&  (type == ipmbChannelType::me))
+            if (channelConfig.contains("channelIdx"))
             {
-                 channelIdx = 1;
-            } 
-            if ((!channelConfig.contains("channelId")) &&  (type == ipmbChannelType::ipmb))
-            {
-                 channelIdx = 0;
-            }
-            if (channelConfig.contains("channelId"))
-            {
-                 channelIdx = channelConfig["channelId"];
+                 channelIdx = channelConfig["channelIdx"];
             }
 
             auto channel =
@@ -851,7 +847,9 @@ static int initializeChannels()
 auto ipmbHandleRequest = [](boost::asio::yield_context yield,
                             uint8_t reqChannel, uint8_t netfn, uint8_t lun,
                             uint8_t cmd, std::vector<uint8_t> dataReceived) {
+
     IpmbChannel *channel = getChannel(reqChannel);
+
     if (channel == nullptr)
     {
         phosphor::logging::log<phosphor::logging::level::ERR>(
@@ -906,6 +904,7 @@ void addUpdateSlaveAddrHandler()
             message.read(reqChannel, busId, slaveAddr);
 
             IpmbChannel *channel = getChannel(reqChannel);
+
             if (channel == nullptr ||
                 (channel->getChannelType() == ipmbChannelType::me))
             {
@@ -945,6 +944,7 @@ void addSendBroadcastHandler()
             message.read(reqChannel, netFn, lun, cmd, dataReceived);
 
             IpmbChannel *channel = getChannel(reqChannel);
+
             if (channel == nullptr)
             {
                 phosphor::logging::log<phosphor::logging::level::ERR>(
