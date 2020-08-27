@@ -25,7 +25,7 @@
 #include <phosphor-logging/log.hpp>
 #include <tuple>
 #include <unordered_map>
-
+#include <iostream>
 /**
  * @brief Dbus
  */
@@ -427,9 +427,17 @@ void IpmbChannel::processI2cEvent()
 
         auto ipmbMessageReceived = IpmbRequest();
         ipmbMessageReceived.i2cToIpmbConstruct(ipmbFrame, r);
+ 
+        uint8_t channelIdx = getChannelIdx();
 
         std::map<std::string, std::variant<int>> options{
-            {"rqSA", ipmbAddressTo7BitSet(ipmbMessageReceived.rqSA)}};
+            {"rqSA", ipmbAddressTo7BitSet(ipmbMessageReceived.rqSA)},
+            {"channelIdx", channelIdx}
+        };
+
+        printf("Channel Index  : %d\n", channelIdx);
+        std::cout.flush();
+
         using IpmiDbusRspType = std::tuple<uint8_t, uint8_t, uint8_t, uint8_t,
                                            std::vector<uint8_t>>;
         conn->async_method_call(
@@ -769,14 +777,11 @@ std::tuple<int, uint8_t, uint8_t, uint8_t, uint8_t, std::vector<uint8_t>>
 
 static IpmbChannel *getChannel(uint8_t reqChannel)
 {
-    uint8_t channelIdx = (reqChannel >> 2);
-    uint8_t channelType = (reqChannel & 3);
-
     auto channel =
         std::find_if(ipmbChannels.begin(), ipmbChannels.end(),
-                     [channelIdx, channelType](IpmbChannel &channel) {
-                         return ((channel.getChannelIdx() == channelIdx) &&
-                                 (channel.getChannelType() == static_cast<ipmbChannelType>(channelType)));
+                     [reqChannel](IpmbChannel &channel) {
+                         return ((channel.getChannelIdx() == (reqChannel >> 2)) &&
+                                 (channel.getChannelType() == static_cast<ipmbChannelType>((reqChannel & 3))));
                      });
     if (channel != ipmbChannels.end())
     {
