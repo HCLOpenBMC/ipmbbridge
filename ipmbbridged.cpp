@@ -428,18 +428,12 @@ void IpmbChannel::processI2cEvent()
         auto ipmbMessageReceived = IpmbRequest();
         ipmbMessageReceived.i2cToIpmbConstruct(ipmbFrame, r);
  
-        int channelIdx = getDevIndex();
-
-        printf("channelIdx : %d\n", channelIdx);
-        std::cout.flush();
+        int devId = getDevIndex();
 
         std::map<std::string, std::variant<int>> options{
             {"rqSA", ipmbAddressTo7BitSet(ipmbMessageReceived.rqSA)},
-            {"channelIdx", channelIdx}
+            {"channelIdx", devId}
         };
-
-        printf("Channel Index  : %d\n", channelIdx);
-        std::cout.flush();
 
         using IpmiDbusRspType = std::tuple<uint8_t, uint8_t, uint8_t, uint8_t,
                                            std::vector<uint8_t>>;
@@ -787,10 +781,6 @@ static IpmbChannel *getChannel(uint8_t reqChannel)
     auto channel =
         std::find_if(ipmbChannels.begin(), ipmbChannels.end(),
                      [reqChannel](IpmbChannel &channel) {
-                         printf("Req channel : %d\n", reqChannel);
-                         printf("Get channel Idx : %d\n", channel.getChannelIdx());
-                         std::cout.flush();
-
                          return channel.getChannelIdx() == reqChannel;
                      });
     if (channel != ipmbChannels.end())
@@ -832,9 +822,6 @@ static int initializeChannels()
             {
                  devIndex = channelConfig["devIndex"];
             }
-
-            printf("Dev Index : %d\n", devIndex);
-            std::cout.flush();
 
             auto channel =
                 ipmbChannels.emplace(ipmbChannels.end(), io, bmcAddr, reqAddr,
@@ -924,7 +911,7 @@ void addUpdateSlaveAddrHandler()
             IpmbChannel *channel = getChannel(reqChannel);
 
             if (channel == nullptr ||
-                reqChannel != static_cast<uint8_t>(ipmbChannelType::ipmb))
+                channel->getChannelType() != ipmbChannelType::ipmb)
             {
                 phosphor::logging::log<phosphor::logging::level::ERR>(
                     "addUpdateSlaveAddrHandler: invalid channel");
